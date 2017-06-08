@@ -1,0 +1,15 @@
+#game {
+    margin: 50px auto;
+    background-color: aquamarine;
+    width: 800px;
+    height: 600px;
+}
+
+
+.bird {
+    position: relative;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: darkgoldenrod;
+}
