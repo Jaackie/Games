@@ -1,15 +1,45 @@
 #game {
+    position: relative;
     margin: 50px auto;
     background-color: aquamarine;
     width: 800px;
     height: 600px;
+    overflow: hidden;
 }
 
-
 .bird {
-    position: relative;
+    position: absolute;
     border-radius: 50%;
     width: 20px;
     height: 20px;
     background-color: darkgoldenrod;
+}
+
+.pipe {
+    position: absolute;
+    width: 50px;
+}
+
+.pipe .top {
+    top: 0;
+    height: 200px;
+}
+
+.pipe .bottom {
+    margin-top: 200px;
+    height: 200px;
+}
+
+.pipe .header {
+    border: #041625 solid 2px;
+    width: 46px;
+    height: 30px;
+    background-color: darkgreen;
+}
+
+.pipe .body {
+    border: #041625 solid 2px;
+    margin: 0 5px;
+    /*height: 162px;*/
+    background-color: darkgreen;
 }
