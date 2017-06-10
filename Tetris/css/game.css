@@ -1,0 +1,22 @@
+#tetris {
+    position: relative;
+    margin: 30px auto;
+    background-color: darkgray;
+    width: 400px;
+    height: 800px;
+    overflow: hidden;
+}
+#tetris table{
+    width: 100%;
+    height:100%;
+    border-color: aquamarine;
+}
+
+#tetris table td{
+    border: aquamarine solid 1px;
+    text-align: center;
+}
+
+#tetris .point{
+    background-color: #2B2B2B;
+}
