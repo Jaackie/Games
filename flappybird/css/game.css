@@ -1,6 +1,21 @@
+#info{
+    position: relative;
+    margin: 10px auto;
+    width: 800px;
+    height: 30px;
+    overflow: hidden;
+}
+
+#score{
+    font-size: 20px;
+    font-weight: bold;
+    font-style: italic;
+    color: red;
+}
+
 #game {
     position: relative;
-    margin: 50px auto;
+    margin: 10px auto;
     background-color: aquamarine;
     width: 800px;
     height: 600px;
@@ -22,12 +37,13 @@
 
 .pipe .top {
     top: 0;
-    height: 200px;
+    /*height: 200px;*/
 }
 
 .pipe .bottom {
-    margin-top: 200px;
-    height: 200px;
+    /*margin-top: 200px;*/
+    /*top: 200px;*/
+    /*height: 200px;*/
 }
 
 .pipe .header {
