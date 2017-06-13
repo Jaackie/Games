@@ -11,19 +11,242 @@ function dd(msg) {
 }
 
 /**
+ * 判断一个值是否为undefined, 如果是则返回默认值
+ * @param value
+ * @param defaultValue
+ * @returns {*}
+ */
+function defaultValue(value, defaultValue) {
+    if (typeof value == 'undefined') {
+        return defaultValue;
+    }
+    return value;
+}
+
+/**
  * 游戏配置
  */
 var config = {
     grids: {
         width: 10, /*画面长格子*/
         height: 20 /*画面高格子*/
-    }
-}, shape = [
-    {
-        name: 'line',
+    },
+    speed: 1000 / 2  /*下落速度, 越大越慢*/
+};
 
+var shape = function () {
+
+    var /**
+         * 形状的名字, 同时也是索引
+         */
+        name,
+        /**
+         * 基础点位置
+         * @type {{x,y}}
+         */
+        base_point = {},
+        /**
+         * 变换形状的索引
+         * @type {number}
+         */
+        trans_index = 0,
+        /**
+         * 形状点的具体位置数组
+         * @type {Array}
+         */
+        points = [],
+        /**
+         * 所有形状对象集合
+         * @type {{}}
+         */
+        shapes = {
+            line: {
+                /*直线*/
+                relative_points: [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}], /*相对基础点的位置*/
+                trans: [/*可变换形状的变换数组*/
+                    [{x: 1, y: -1}, {x: 0, y: 0}, {x: -1, y: 1}, {x: -2, y: -2}],
+                    [{x: -1, y: 1}, {x: 0, y: 0}, {x: 1, y: -1}, {x: 2, y: 2}]
+                ],
+                bp: {
+                    /*基础点位置计算*/
+                    x: Math.floor(config.grids.width / 2) - 1,
+                    y: config.grids.height
+                }
+            },
+            square: {
+                /*正方形*/
+                relative_points: [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}],
+                trans: [],
+                bp: {
+                    x: Math.floor(config.grids.width / 2),
+                    y: config.grids.height
+                }
+            },
+            z: {
+                /*z形*/
+                relative_points: [{x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: -1}, {x: 2, y: -1}],
+                trans: [
+                    [{x: 2, y: 1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}],
+                    [{x: -2, y: -1}, {x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}]
+                ],
+                bp: {
+                    x: Math.floor(config.grids.width / 2) - 1,
+                    y: config.grids.height
+                }
+            },
+            oz: {
+                /*反的z形*/
+                relative_points: [{x: -1, y: -1}, {x: 0, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}],
+                trans: [
+                    [{x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}, {x: -2, y: 1}],
+                    [{x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 2, y: -1}]
+                ],
+                bp: {
+                    x: Math.floor(config.grids.width / 2),
+                    y: config.grids.height
+                }
+            },
+            j: {
+                /*J形*/
+                relative_points: [{x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: -1}, {x: 2, y: -1}],
+                trans: [
+                    [{x: 0, y: -1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 2}],
+                    [{x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}, {x: -2, y: -1}],
+                    [{x: 0, y: 1}, {x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: -2}],
+                    [{x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 2, y: 1}]
+                ],
+                bp: {
+                    x: Math.floor(config.grids.width / 2) - 1,
+                    y: config.grids.height
+                }
+            },
+            l: {
+                /*L形*/
+                relative_points: [{x: 0, y: 0}, {x: 0, y: -1}, {x: -1, y: -1}, {x: -2, y: -1}],
+                trans: [
+                    [{x: 0, y: -1}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 1, y: 2}],
+                    [{x: -1, y: 0}, {x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: -1}],
+                    [{x: 0, y: 1}, {x: 1, y: 0}, {x: 0, y: -1}, {x: -1, y: -2}],
+                    [{x: 1, y: 0}, {x: 0, y: -1}, {x: -1, y: 0}, {x: -2, y: 1}]
+                ],
+                bp: {
+                    x: Math.floor(config.grids.width / 2) + 1,
+                    y: config.grids.height
+                }
+            },
+            t: {
+                /*T形*/
+                relative_points: [{x: 0, y: 0}, {x: -1, y: -1}, {x: 0, y: -1}, {x: 1, y: -1}],
+                trans: [
+                    [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 2}],
+                    [{x: 0, y: -1}, {x: 0, y: 1}, {x: -1, y: 0}, {x: -2, y: -1}],
+                    [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: -2}],
+                    [{x: 0, y: 1}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 2, y: 1}]
+                ],
+                bp: {
+                    x: Math.floor(config.grids.width / 2),
+                    y: config.grids.height
+                }
+            }
+        };
+
+    /**
+     * 获取各点变换的数组
+     * @returns {Array}
+     */
+    this.getTrans = function () {
+        var trans = shapes[name].trans[trans_index];
+        if (typeof trans == 'undefined') {
+            trans = [];
+        }
+        return trans;
+    };
+
+    /**
+     * 变换计算
+     */
+    this.trans = function () {
+        trans_index++;
+        /*索引指向下一位变换数组*/
+        if (typeof shapes[name].trans[trans_index] == 'undefined') {
+            trans_index = 0;
+            /*如果不存在下一位切换回第1位*/
+        }
+    };
+
+    /**
+     * 初始化
+     * @param shapeName
+     * @param shape
+     */
+    function init(shapeName, shape) {
+        name = shapeName;
+        base_point = shape.bp;
+        initPoints(shape.relative_points);
     }
-];
+
+    /**
+     * 初始化所有点
+     * @param relativePoints
+     */
+    function initPoints(relativePoints) {
+        relativePoints.forEach(function (p) {
+            points.push({
+                x: base_point.x + p.x,
+                y: base_point.y + p.y
+            })
+        });
+    }
+
+    /**
+     * 返回初始点数组
+     * @returns {Array}
+     */
+    this.getPoints = function () {
+        return points;
+    };
+
+    /**
+     * 随机生成一个形状并初始化对象
+     */
+    this.random = function () {
+        var /**
+             * 随机最大值
+             * @type {Number}
+             */
+            max = Object.getOwnPropertyNames(shapes).length,
+            /**
+             * 获取随机值
+             * @type {number}
+             */
+            r = Math.floor(Math.random() * max),
+            /**
+             * 迭代计数
+             * @type {number}
+             */
+            i = 0,
+            /**
+             * 形状对象
+             */
+            obj,
+            /**
+             * 形状名字
+             */
+            name;
+
+        for (var s in shapes) {
+            if (i == r) {
+                name = s;
+                obj = shapes[s];
+                break;
+            }
+            i++;
+        }
+
+        init(name, obj);
+    }
+};
+
 
 var game = function (gameId) {
     var board = $('#' + gameId),
@@ -55,7 +278,11 @@ var game = function (gameId) {
          * 得分
          * @type {number}
          */
-        score = 0;
+        score = 0,
+        /**
+         * 移动中形状对象
+         */
+        moving_shape;
 
     /**
      * 生成一个像素点html元素id
@@ -112,18 +339,6 @@ var game = function (gameId) {
         }
     }
 
-    /**
-     * 判断一个值是否为undefined, 如果是则返回默认值
-     * @param value
-     * @param defaultValue
-     * @returns {*}
-     */
-    function defaultValue(value, defaultValue) {
-        if (typeof value == 'undefined') {
-            return defaultValue;
-        }
-        return value;
-    }
 
     /**
      * 通过xy坐标体系设置点
@@ -163,10 +378,9 @@ var game = function (gameId) {
      */
     function makeShape() {
         walker_once = false;
-        moving_points.push({x: 4, y: 19});
-        moving_points.push({x: 4, y: 20});
-        moving_points.push({x: 5, y: 19});
-        moving_points.push({x: 5, y: 20});
+        moving_shape = new shape();
+        moving_shape.random();
+        moving_points = moving_shape.getPoints();
     }
 
     /**
@@ -208,11 +422,11 @@ var game = function (gameId) {
             direction = defaultValue(direction, 0);
 
             var every_point_could_move = true;
-            moving_points.forEach(function (p) {
+            moving_points.forEach(function (p) {    /*分析每个点是否可移动*/
                 every_point_could_move = every_point_could_move && couldMove(p.x, p.y, direction);
             });
 
-            moving_points.forEach(function (p, i) {
+            moving_points.forEach(function (p, i) { /*计算每个移动的点*/
                 if (every_point_could_move) {
                     setPoint(p.x, p.y, false);
                     walker_once = true;
@@ -233,7 +447,7 @@ var game = function (gameId) {
                     moving_points[i].y = y;
                 } else {
                     if (direction == 0) {
-                        setPoint(p.x, p.y, true, 1);    //固化, 使之成为不可移动的点
+                        setPoint(p.x, p.y, true, 1);    //向下移动时,不能再继续移动, 固化, 使之成为不可移动的点
                     }
                 }
             });
@@ -241,13 +455,16 @@ var game = function (gameId) {
             if (every_point_could_move) {
                 moving_points.forEach(function (p) {
                     setPoint(p.x, p.y, true, 2);
+                    /*刷新移动的点*/
                 });
             } else {
                 scoreTest();
+                /*不可移动时得分检测*/
             }
 
             if (!every_point_could_move && direction == 0) {
                 moving_points = [];
+                /*清空可移动的点*/
             }
         }
     }
@@ -256,10 +473,21 @@ var game = function (gameId) {
      * 得分检测
      */
     function scoreTest() {
-        var get_lines = 0, could_get, line_empty, is_exist, lines = [];
+        var /**
+             * 已得分的行数
+             * @type {number}
+             */
+            get_lines = 0, could_get, line_empty, is_exist,
+            /**
+             * 得分行数组
+             * @type {Array}
+             */
+            lines = [];
         for (var i = config.grids.height - 1; i >= 0; i--) {
             could_get = true;
+            /*是否可得分*/
             line_empty = true;
+            /*分析行是否为空, 为空的话后面的循环可以不用再继续了*/
             for (var j = 0; j < config.grids.width; j++) {
                 is_exist = grids[i][j] == 1;
                 if (is_exist) {
@@ -272,6 +500,7 @@ var game = function (gameId) {
             }
             if (line_empty) {
                 break;
+                /*跳出判断循环*/
             }
         }
         getScore(lines);
@@ -289,16 +518,19 @@ var game = function (gameId) {
 
         lines.forEach(function (l) {
             for (var get_j = 0; get_j < config.grids.width; get_j++) {
-                setGrid(l.line, get_j, false);   //删除得分行
+                setGrid(l.line, get_j, false);
+                /*删除得分行*/
             }
             score++;
+            /*得分累计*/
         });
 
         var move_lines = 0;
-        for (var i = config.grids.height - 2; i >= 0; i--) {    //所有点向下移动一位
+        for (var i = config.grids.height - 2; i >= 0; i--) {    /*所有点向下移动*/
             for (var k = 0; k < len; k++) {
                 if (i <= lines[k].line) {
                     move_lines = lines[k].get_lines + 1;
+                    /*计算可向下移动的位数*/
                 }
             }
             for (var j = 0; j < config.grids.width; j++) {
@@ -332,6 +564,47 @@ var game = function (gameId) {
     };
 
     /**
+     * 检测是否可以变换形状
+     * @param transPoints
+     * @returns {boolean}
+     */
+    function couldTrans(transPoints) {
+        var could = true;
+        moving_points.forEach(function (p, ii) {
+            var x = p.x + transPoints[ii].x,
+                y = p.y + transPoints[ii].y,
+                index = toIJ(x, y),
+                i = index.i,
+                j = index.j;
+            could = could && i >= 0 && i < config.grids.height && j >= 0 && j < config.grids.width && grids[i][j] != 1
+        });
+        return could;
+    }
+
+    /**
+     * 形状变换
+     */
+    this.trans = function () {
+        var trans_points = moving_shape.getTrans();
+        if (trans_points.length == 0) {
+            return;
+        }
+        if (!couldTrans(trans_points)) {
+            return;
+        }
+        moving_points.forEach(function (p, ii) {
+            setPoint(p.x, p.y, false);
+            var x = p.x + trans_points[ii].x,
+                y = p.y + trans_points[ii].y;
+            moving_points[ii].x = x;
+            moving_points[ii].y = y;
+            setPoint(x, y, true, 2);
+        });
+
+        moving_shape.trans();
+    };
+
+    /**
      * 结束检测
      */
     function stopTest() {
@@ -346,7 +619,9 @@ var game = function (gameId) {
     function stop() {
         is_finished = true;
         clearInterval(internal_id);
-        alert('game over!');
+        if (confirm('game over! your score is ' + score + ', start game again?')) {
+            location.reload();
+        }
     }
 
     /**
@@ -362,7 +637,7 @@ var game = function (gameId) {
                 pointsWalker(0);
                 stopTest();
             }
-        }, 200);
+        }, config.speed);
     }
 
 };
@@ -373,6 +648,9 @@ var game = function (gameId) {
 
     $(document).keydown(function (e) {
         switch (e.which) {
+            case 38:
+                my_game.trans();
+                break;
             case 37:
                 my_game.walkerLeft();
                 break;
@@ -384,16 +662,5 @@ var game = function (gameId) {
                 break;
         }
     });
-
-    /*var a = [1, 2, 3, 4];
-     dd(a[4].b);*/
-
-    /*$("html").click(function () {
-     if (my_game.isFinished()) {
-     my_game.start();
-     } else {
-     my_game.jump();
-     }
-     });*/
 
 })();
